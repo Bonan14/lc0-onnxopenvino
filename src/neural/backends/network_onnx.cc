@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #if __has_include("dml_provider_factory.h")
 #include "dml_provider_factory.h"
@@ -54,7 +55,7 @@
 namespace lczero {
 namespace {
 
-enum class OnnxProvider { CPU, CUDA, DML, ROCM, TRT };
+enum class OnnxProvider { CPU, CUDA, DML, ROCM, TRT, OPENVINO };
 
 class OnnxNetwork;
 
@@ -373,6 +374,21 @@ Ort::SessionOptions OnnxNetwork::GetOptions(int gpu, int threads,
       api.ReleaseTensorRTProviderOptions(trt_options_v2);
       break;
     }
+    case OnnxProvider::OPENVINO: {
+      options.SetEpSelectionPolicy(OrtExecutionProviderDevicePolicy_PREFER_GPU);
+      options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_DISABLE_ALL);
+      std::unordered_map<std::string, std::string> openvino_options;
+      openvino_options["device_type"] = "GPU"; 
+      openvino_options["precision"] = "FP16";
+      openvino_options["num_of_threads"] = "8";
+      openvino_options["num_streams"] = "8";
+      openvino_options["cache_dir"] = "dumps";
+      openvino_options["context"] = "0x123456ff";
+      openvino_options["enable_qdq_optimizer"] = "True";
+      //openvino_options["load_config"] = "config_path.json";
+      options.AppendExecutionProvider_OpenVINO_V2(openvino_options);
+     break;
+    }
     case OnnxProvider::ROCM: {
       OrtROCMProviderOptions rocm_options;
       rocm_options.device_id = gpu;
@@ -500,14 +516,15 @@ std::unique_ptr<Network> MakeOnnxNetwork(const std::optional<WeightsFile>& w,
 }
 
 #ifdef USE_ROCM
-REGISTER_NETWORK("onnx-rocm", MakeOnnxNetwork<OnnxProvider::ROCM>, 64)
+REGISTER_NETWORK("onnx-rocm", MakeOnnxNetwork<OnnxProvider::ROCM>, 65)
 #endif
 #ifdef USE_DML
-REGISTER_NETWORK("onnx-dml", MakeOnnxNetwork<OnnxProvider::DML>, 63)
+REGISTER_NETWORK("onnx-dml", MakeOnnxNetwork<OnnxProvider::DML>, 64)
 #endif
 REGISTER_NETWORK("onnx-trt", MakeOnnxNetwork<OnnxProvider::TRT>, 60)
-REGISTER_NETWORK("onnx-cuda", MakeOnnxNetwork<OnnxProvider::CUDA>, 61)
-REGISTER_NETWORK("onnx-cpu", MakeOnnxNetwork<OnnxProvider::CPU>, 62)
+REGISTER_NETWORK("onnx-openvino", MakeOnnxNetwork<OnnxProvider::OPENVINO>, 61)
+REGISTER_NETWORK("onnx-cuda", MakeOnnxNetwork<OnnxProvider::CUDA>, 62)
+REGISTER_NETWORK("onnx-cpu", MakeOnnxNetwork<OnnxProvider::CPU>, 63)
 
 }  // namespace
 }  // namespace lczero

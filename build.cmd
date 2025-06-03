@@ -20,6 +20,7 @@ set MKL_PATH=C:\Program Files (x86)\IntelSWTools\compilers_and_libraries\windows
 set DNNL_PATH=C:\dnnl_win_1.1.1_cpu_vcomp
 set OPENCL_LIB_PATH=%CUDA_PATH%\lib\x64
 set OPENCL_INCLUDE_PATH=%CUDA_PATH%\include
+set ONNX_INCLUDE_PATH=C:\Users\PC\Documents\Build_Tools\ovep-win-1.22.0\ovep_package_creation\ovep_install
 
 rem 3. In most cases you won't need to change anything further down.
 echo Deleting build directory:
@@ -62,6 +63,7 @@ meson setup build --backend %backend% --buildtype release -Ddx=%DX12% -Dcudnn=%C
 -Dcudnn_include="%CUDNN_INCLUDE_PATH%" -Dcudnn_libdirs="%CUDNN_LIB_PATH%" ^
 -Dmkl_include="%MKL_PATH%\include" -Dmkl_libdirs="%MKL_PATH%\lib\intel64" -Ddnnl_dir="%DNNL_PATH%" ^
 -Dopencl_libdirs="%OPENCL_LIB_PATH%" -Dopencl_include="%OPENCL_INCLUDE_PATH%" ^
+-Donnx_libdir="%ONNX_INCLUDE_PATH%\lib" -Donnx_include="%ONNX_INCLUDE_PATH%\include" ^
 -Dopenblas_include="%OPENBLAS_PATH%\include" -Dopenblas_libdirs="%OPENBLAS_PATH%\lib" ^
 -Ddefault_library=static
 
